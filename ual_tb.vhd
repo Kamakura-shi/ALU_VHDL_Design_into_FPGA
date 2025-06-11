@@ -1,12 +1,3 @@
---================ alu.vhd =================================
--- ELE344 Conception et architecture de processeurs
--- AUTOMNE 2018, Ecole de technologie superieure
--- ***** Nom et Prénom ************
--- ***** Code permanent ************
--- =============================================================
--- Description: 
---             Testbench du UAL a 32 bits.
--- =============================================================
 LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
 USE ieee.numeric_std.ALL;
@@ -30,8 +21,17 @@ ARCHITECTURE UAL_tb_arc OF UAL_tb IS
   CONSTANT PERIODE : time := 20 ns;
 
 BEGIN
-  ALU32 : ENTITY work.                   -- À compléter (instancier l'UAL)
-    
+  ALU32 : ENTITY work.UAL
+    GENERIC MAP (N => TAILLE)
+    PORT MAP (
+      ualControl => ualControl,
+      srcA       => srcA,
+      srcB       => srcB,
+      result     => result,
+      cout       => cout,
+      zero       => zero
+    );
+
 ------------------------------------------------------------------
     PROCESS(ualControl)
     BEGIN
@@ -47,7 +47,6 @@ BEGIN
 
 ------------------------------------------------------------------                           
   PROCESS
-
     FILE fichierIn  : text OPEN read_mode IS "ual_entrees.txt";
     FILE fichierOut : text OPEN write_mode IS "ual_sorties.txt";
 
@@ -58,24 +57,68 @@ BEGIN
     VARIABLE good                          : boolean;
     VARIABLE entete                        : boolean := true;
   BEGIN
-    -- À compléter 
-    -- Le testbench doit contenir la Détection des erreurs pour Result, zero et cout
+    -- Ã‰crire l'en-tÃªte une seule fois
     IF entete THEN
-      write(ligneSortie, string'("<ualCtrl> < srcA > < srcB >  < Résultat > < Résultat_UAL > < zero > < cout >: <commentaire>"));
+      write(ligneSortie, string'("<UALCtrl> <srcA> <srcB> <result> <zero> <cout> <resultUAL> <zeroUAL> <coutUAL> : <commentaire>"));
       writeline(fichierOut, ligneSortie);
       entete := false;
     END IF;
 
-    IF NOT(endfile(fichierIn)) THEN
+    -- Sauter les deux premiÃ¨res lignes du fichier dâ€™entrÃ©e si besoin
+    readline(fichierIn, ligneEntree);
+    readline(fichierIn, ligneEntree);
+
+    -- Parcourir les lignes
+    WHILE NOT endfile(fichierIn) LOOP
       readline(fichierIn, ligneEntree);
+
+      -- Lecture des valeurs
       hread(ligneEntree, vUAL, good);
-      ASSERT good REPORT "Erreur de lecture de l'operande UALcontrol" SEVERITY error;
+      ASSERT good REPORT "Erreur de lecture de UALControl" SEVERITY error;
+      hread(ligneEntree, vsrcA, good);
+      ASSERT good REPORT "Erreur de lecture de srcA" SEVERITY error;
+      hread(ligneEntree, vsrcB, good);
+      ASSERT good REPORT "Erreur de lecture de srcB" SEVERITY error;
+      hread(ligneEntree, vresult_attendu, good);
+      ASSERT good REPORT "Erreur de lecture du resultat attendu" SEVERITY error;
+      read(ligneEntree, vzero, good);
+      ASSERT good REPORT "Erreur de lecture de zero attendu" SEVERITY error;
+      read(ligneEntree, vcout, good);
+      ASSERT good REPORT "Erreur de lecture de cout attendu" SEVERITY error;
 
+      -- Appliquer les signaux
+      ualControl      <= vUAL;
+      srcA           <= vsrcA;
+      srcB           <= vsrcB;
+      result_attendu <= vresult_attendu; -- AjoutÃ©
+      zero_attendu   <= vzero;           -- AjoutÃ©
+      cout_attendu   <= vcout;           -- AjoutÃ©
 
-      -- À compléter 
+      WAIT FOR PERIODE;
 
+      -- Ã‰criture des rÃ©sultats en hexadÃ©cimal
+      ligneSortie := null;
+      hwrite(ligneSortie, vUAL, left, 10);
+      hwrite(ligneSortie, vsrcA, right, 10);
+      hwrite(ligneSortie, vsrcB, right, 10);
+      hwrite(ligneSortie, vresult_attendu, right, 12);
+      write(ligneSortie, str(vzero), right, 6);
+      write(ligneSortie, str(vcout), right, 6);
+      hwrite(ligneSortie, result, right, 12);
+      write(ligneSortie, str(zero), right, 6);
+      write(ligneSortie, str(cout), right, 6);
+      write(ligneSortie, string'(": "), right, 2);
+
+      IF (result = vresult_attendu) AND (zero = vzero) AND (cout = vcout) THEN
+        write(ligneSortie, string'("SUCCES"));
+      ELSE
+        write(ligneSortie, string'("ECHEC "));
+      END IF;
 
       writeline(fichierOut, ligneSortie);
+    END LOOP;
 
-    END PROCESS;
+    WAIT;
+  END PROCESS;
+
 END UAL_tb_arc;
