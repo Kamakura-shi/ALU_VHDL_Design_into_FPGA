@@ -1,4 +1,4 @@
-This VHDL testbench (UAL_tb.vhd) is designed to verify a 32-bit arithmetic and logic unit (UAL) by reading input vectors from ual_entrees.txt and writing simulation results to ual_sorties.txt.
+This VHDL testbench (UAL_tb.vhd) is designed to verify a 32-bit arithmetic and logic unit (ALU) by reading input vectors from ual_entrees.txt and writing simulation results to ual_sorties.txt.
 The design of the architecture for the circuit for the ual.vhd file was done via Quartus.
 
 This VHDL testbench (UAL_tb.vhd) is designed to verify a 32-bit arithmetic and logic unit (UAL) by reading input vectors from ual_entrees.txt and writing simulation results to ual_sorties.txt. 
